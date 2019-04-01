@@ -15,12 +15,52 @@
  * с сообщением 'argument should be an array'.
  */
 
-function smoosh() {
-  // your code here
+function smoosh(arr) {
+  if (isArray(arr)) {
+    let result = [];
+
+    arr.forEach(val => {
+      if (Array.isArray(val)) {
+        result = result.concat(smoosh(val));
+      } else {
+        result.push(val);
+      }
+    });
+
+    return result;
+  }
 }
 
-function squeeze() {
-  // your code here
+function squeeze(arr) {
+  if (isArray(arr)) {
+    function smooshInSqueeze(smooshArr) {
+      let result = [];
+
+      smooshArr.forEach(val => {
+        if (Array.isArray(val)) {
+          result = result.concat(smooshInSqueeze(val));
+        } else {
+          result.push(val);
+        }
+      });
+
+      return result;
+    }
+
+    arr.forEach((val, index) => {
+      if (Array.isArray(val)) {
+        arr.splice(index, 1, ...smooshInSqueeze(val));
+      }
+    });
+
+    return arr;
+  }
+}
+
+function isArray(arr) {
+  if (arr instanceof Array) return true;
+
+  throw new Error('argument should be an array');
 }
 
 export { smoosh, squeeze };

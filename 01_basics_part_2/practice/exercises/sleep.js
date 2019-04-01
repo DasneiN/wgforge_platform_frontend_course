@@ -6,5 +6,14 @@
  */
 
 export default function sleep() {
-  // your code here
+  export default function sleep(sec) {
+    const s = +sec;
+
+    if (!isNaN(s) && typeof s === 'number' && s > 0 && s % 1 === 0) {
+      const currentTime = new Date().getTime();
+      while (currentTime + +sec * 1000 >= new Date().getTime()) { }
+    } else {
+      void 0;
+    }
+  }
 }
