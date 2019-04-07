@@ -81,6 +81,126 @@
  * 3. Реализовать функциональность создания INSERT и DELETE запросов. Написать для них тесты.
  */
 
-export default function query() {
-  // ¯\_(ツ)_/¯
+export default function query(tableName) {
+  return new function(tableName) {
+    let request = {
+      tableName
+    };
+
+    this.select = function(...entries) {
+      request.entries = entries.length > 0 ? entries.join(', ') : '*';
+      return this;
+    };
+
+    this.from = function(tableName) {
+      request.tableName = request.tableName || tableName;
+      return this;
+    };
+
+    this.where = function(parameter, addOR = false) {
+      const parent = this;
+      let isNotActive = false;
+
+      if (request.where) {
+        request.where += ` ${addOR ? 'OR' : 'AND'} `;
+      } else {
+        request.where = '';
+      }
+
+      return new function() {
+        function escapeCharacters(value) {
+          return typeof value == 'string' ? `'${value}'` : value;
+        }
+
+        this.equals = function(value) {
+          const addNot = isNotActive ? 'NOT ' : '';
+          isNotActive = false;
+
+          request.where += `${addNot + parameter} = ${escapeCharacters(value)}`;
+          return parent;
+        };
+
+        this.in = function(values) {
+          const operator = isNotActive ? 'NOT IN' : 'IN';
+          request.where += `${parameter} ${operator} (${values
+            .map(v => escapeCharacters(v))
+            .join(', ')})`;
+          isNotActive = false;
+
+          return parent;
+        };
+
+        this.gt = function(value) {
+          const addNot = isNotActive ? 'NOT ' : '';
+          isNotActive = false;
+
+          request.where += `${addNot + parameter} > ${escapeCharacters(value)}`;
+          return parent;
+        };
+
+        this.gte = function(value) {
+          const addNot = isNotActive ? 'NOT ' : '';
+          isNotActive = false;
+
+          request.where += `${addNot + parameter} >= ${escapeCharacters(value)}`;
+          return parent;
+        };
+
+        this.lt = function(value) {
+          const addNot = isNotActive ? 'NOT ' : '';
+          isNotActive = false;
+
+          request.where += `${addNot + parameter} < ${escapeCharacters(value)}`;
+          return parent;
+        };
+
+        this.lte = function(value) {
+          const addNot = isNotActive ? 'NOT ' : '';
+          isNotActive = false;
+
+          request.where += `${addNot + parameter} <= ${escapeCharacters(value)}`;
+          return parent;
+        };
+
+        this.between = function(startValue, endValue) {
+          const addNot = isNotActive ? 'NOT ' : '';
+          isNotActive = false;
+
+          request.where += `${addNot + parameter} BETWEEN ${startValue} AND ${endValue}`;
+          return parent;
+        };
+
+        this.isNull = function() {
+          const operator = isNotActive ? 'IS NOT NULL' : 'IS NULL';
+          isNotActive = false;
+
+          request.where += `${parameter} ${operator}`;
+          return parent;
+        };
+
+        this.not = function() {
+          if (isNotActive) {
+            throw new Error("not() can't be called multiple times in a row !");
+          }
+
+          isNotActive = true;
+          return this;
+        };
+      }();
+    };
+
+    this.orWhere = function(parameter) {
+      return this.where(parameter, true);
+    };
+
+    this.toString = function() {
+      let fullQuery = `SELECT ${request.entries} FROM ${request.tableName}`;
+
+      if (request.where) {
+        fullQuery += ` WHERE ${request.where}`;
+      }
+
+      return `${fullQuery};`;
+    };
+  }();
 }
