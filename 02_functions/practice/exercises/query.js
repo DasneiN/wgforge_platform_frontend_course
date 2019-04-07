@@ -81,19 +81,32 @@
  * 3. Реализовать функциональность создания INSERT и DELETE запросов. Написать для них тесты.
  */
 
-export default function query(tableName) {
-  return new function(tableName) {
+export default function query(...args) {
+  return new function() {
     let request = {
-      tableName
+      tableName: typeof args[0] === 'string' ? args[0] : undefined,
+      escapeNames: typeof args[0] === 'object' ? args[0].escapeNames : false
     };
 
+    if (args.length > 1) {
+      request.escapeNames = args[1].escapeNames;
+    }
+
     this.select = function(...entries) {
-      request.entries = entries.length > 0 ? entries.join(', ') : '*';
+      if (request.escapeNames) {
+        request.entries = entries.length > 0 ? entries.map(v => `"${v}"`).join(', ') : '*';
+      } else {
+        request.entries = entries.length > 0 ? entries.join(', ') : '*';
+      }
       return this;
     };
 
     this.from = function(tableName) {
-      request.tableName = request.tableName || tableName;
+      if (request.escapeNames) {
+        request.tableName = `${request.tableName || tableName}`;
+      } else {
+        request.tableName = `${request.tableName || tableName}`;
+      }
       return this;
     };
 
@@ -194,9 +207,18 @@ export default function query(tableName) {
     };
 
     this.toString = function() {
-      let fullQuery = `SELECT ${request.entries} FROM ${request.tableName}`;
+      let fullQuery = `SELECT ${request.entries} `;
+
+      if (request.escapeNames) {
+        fullQuery += `FROM "${request.tableName}"`;
+      } else {
+        fullQuery += `FROM ${request.tableName}`;
+      }
 
       if (request.where) {
+        if (request.escapeNames) {
+          request.where = request.where.replace("'", '"');
+        }
         fullQuery += ` WHERE ${request.where}`;
       }
 
