@@ -213,17 +213,13 @@ export default function query(...args) {
     };
 
     this.toString = function() {
-      let fullQuery = `SELECT ${request.entries} `;
-
-      if (request.escapeNames) {
-        fullQuery += `FROM "${request.tableName}"`;
-      } else {
-        fullQuery += `FROM ${request.tableName}`;
-      }
+      let fullQuery = `SELECT ${request.entries} FROM ${request.quotes +
+        request.tableName +
+        request.quotes}`;
 
       if (request.where) {
-        if (request.escapeNames) {
-          request.where = request.where.replace("'", '"');
+        if (request.quotes === '"') {
+          request.where = request.where.replace(/'/, '"');
         }
         fullQuery += ` WHERE ${request.where}`;
       }
