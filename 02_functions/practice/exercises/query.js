@@ -83,7 +83,7 @@
 
 export default function query(...args) {
   return new function() {
-    let request = {
+    const request = {
       tableName: typeof args[0] === 'string' ? args[0] : undefined,
       escapeNames: typeof args[0] === 'object' ? args[0].escapeNames : false
     };
@@ -121,9 +121,9 @@ export default function query(...args) {
       }
 
       return new function() {
-        function escapeCharacters(value) {
-          return typeof value == 'string' ? `'${value}'` : value;
-        }
+        const escapeCharacters = function(value) {
+          return typeof value === 'string' ? `'${value}'` : value;
+        };
 
         this.equals = function(value) {
           const addNot = isNotActive ? 'NOT ' : '';
