@@ -85,28 +85,26 @@ export default function query(...args) {
   return new function() {
     const request = {
       tableName: typeof args[0] === 'string' ? args[0] : undefined,
-      escapeNames: typeof args[0] === 'object' ? args[0].escapeNames : false
+      quotes: ''
     };
 
-    if (args.length > 1) {
-      request.escapeNames = args[1].escapeNames;
+    if (
+      (typeof args[0] === 'object' && args[0].escapeNames) ||
+      (args.length > 1 && args[1].escapeNames)
+    ) {
+      request.quotes = '"';
     }
 
     this.select = function(...entries) {
-      if (request.escapeNames) {
-        request.entries = entries.length > 0 ? entries.map(v => `"${v}"`).join(', ') : '*';
-      } else {
-        request.entries = entries.length > 0 ? entries.join(', ') : '*';
-      }
+      request.entries =
+        entries.length > 0
+          ? entries.map(v => `${request.quotes + v + request.quotes}`).join(', ')
+          : '*';
       return this;
     };
 
     this.from = function(tableName) {
-      if (request.escapeNames) {
-        request.tableName = `${request.tableName || tableName}`;
-      } else {
-        request.tableName = `${request.tableName || tableName}`;
-      }
+      request.tableName = `${request.tableName || tableName}`;
       return this;
     };
 
@@ -122,7 +120,15 @@ export default function query(...args) {
 
       return new function() {
         const escapeCharacters = function(value) {
-          return typeof value === 'string' ? `'${value}'` : value;
+          if (typeof value === 'string') {
+            if (request.quotes === '"') {
+              return `"${value}"`;
+            }
+
+            return `'${value}'`;
+          }
+
+          return value;
         };
 
         this.equals = function(value) {
