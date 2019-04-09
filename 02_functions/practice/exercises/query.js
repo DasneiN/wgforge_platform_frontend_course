@@ -88,6 +88,18 @@ export default function query(...args) {
       quotes: ''
     };
 
+    const isString = function(str) {
+      if (typeof str !== 'string') {
+        throw new Error('Argument must be String');
+      }
+    };
+
+    const isArray = function(arr) {
+      if (!Array.isArray(arr)) {
+        throw new Error('Argument must be Array');
+      }
+    };
+
     if (
       (typeof args[0] === 'object' && args[0].escapeNames) ||
       (args.length > 1 && args[1].escapeNames)
@@ -98,18 +110,26 @@ export default function query(...args) {
     this.select = function(...entries) {
       request.entries =
         entries.length > 0
-          ? entries.map(v => `${request.quotes + v + request.quotes}`).join(', ')
+          ? entries
+              .map(v => {
+                isString(v);
+                return `${request.quotes + v + request.quotes}`;
+              })
+              .join(', ')
           : '*';
       return this;
     };
 
     this.from = function(tableName) {
+      isString(tableName);
       request.tableName = `${request.tableName || tableName}`;
       return this;
     };
 
     this.where = function(parameter, addOR = false) {
-      const parent = this;
+      isString(parameter);
+
+      const where = this;
       let isNotActive = false;
 
       if (request.where) {
@@ -136,17 +156,18 @@ export default function query(...args) {
           isNotActive = false;
 
           request.where += `${addNot + parameter} = ${escapeCharacters(value)}`;
-          return parent;
+          return where;
         };
 
         this.in = function(values) {
+          isArray(values);
           const operator = isNotActive ? 'NOT IN' : 'IN';
           request.where += `${parameter} ${operator} (${values
             .map(v => escapeCharacters(v))
             .join(', ')})`;
           isNotActive = false;
 
-          return parent;
+          return where;
         };
 
         this.gt = function(value) {
@@ -154,7 +175,7 @@ export default function query(...args) {
           isNotActive = false;
 
           request.where += `${addNot + parameter} > ${escapeCharacters(value)}`;
-          return parent;
+          return where;
         };
 
         this.gte = function(value) {
@@ -162,7 +183,7 @@ export default function query(...args) {
           isNotActive = false;
 
           request.where += `${addNot + parameter} >= ${escapeCharacters(value)}`;
-          return parent;
+          return where;
         };
 
         this.lt = function(value) {
@@ -170,7 +191,7 @@ export default function query(...args) {
           isNotActive = false;
 
           request.where += `${addNot + parameter} < ${escapeCharacters(value)}`;
-          return parent;
+          return where;
         };
 
         this.lte = function(value) {
@@ -178,7 +199,7 @@ export default function query(...args) {
           isNotActive = false;
 
           request.where += `${addNot + parameter} <= ${escapeCharacters(value)}`;
-          return parent;
+          return where;
         };
 
         this.between = function(startValue, endValue) {
@@ -186,7 +207,7 @@ export default function query(...args) {
           isNotActive = false;
 
           request.where += `${addNot + parameter} BETWEEN ${startValue} AND ${endValue}`;
-          return parent;
+          return where;
         };
 
         this.isNull = function() {
@@ -194,7 +215,7 @@ export default function query(...args) {
           isNotActive = false;
 
           request.where += `${parameter} ${operator}`;
-          return parent;
+          return where;
         };
 
         this.not = function() {
