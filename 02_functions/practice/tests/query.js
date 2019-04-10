@@ -147,28 +147,25 @@ test('query', t => {
     tt.end();
   });
 
-  t.test(
-    'sql escaping',
-    /*{ skip: true },*/ tt => {
-      const escapedQ1 = query('table', { escapeNames: true });
-      const escapedQ2 = query({ escapeNames: true });
+  t.test('sql escaping', { skip: true }, tt => {
+    const escapedQ1 = query('table', { escapeNames: true });
+    const escapedQ2 = query({ escapeNames: true });
 
-      tt.false(Object.is(escapedQ1, escapedQ2));
+    tt.false(Object.is(escapedQ1, escapedQ2));
 
-      escapedQ1.select('id', 'name');
-      escapedQ2.select('hex', 'hsla').from('colors');
+    escapedQ1.select('id', 'name');
+    escapedQ2.select('hex', 'hsla').from('colors');
 
-      tt.equal(`${escapedQ1}`, 'SELECT "id", "name" FROM "table";');
-      tt.equal(`${escapedQ2}`, 'SELECT "hex", "hsla" FROM "colors";');
+    tt.equal(`${escapedQ1}`, 'SELECT "id", "name" FROM "table";');
+    tt.equal(`${escapedQ2}`, 'SELECT "hex", "hsla" FROM "colors";');
 
-      const unescapedQ = query({ escapeNames: false })
-        .select('field')
-        .from('table');
-      tt.equal(unescapedQ.toString(), 'SELECT field FROM table;');
+    const unescapedQ = query({ escapeNames: false })
+      .select('field')
+      .from('table');
+    tt.equal(unescapedQ.toString(), 'SELECT field FROM table;');
 
-      tt.end();
-    }
-  );
+    tt.end();
+  });
 
   t.end();
 });
