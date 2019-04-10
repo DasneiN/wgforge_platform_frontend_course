@@ -94,12 +94,6 @@ export default function query(...args) {
       }
     };
 
-    const isArray = function(arr) {
-      if (!Array.isArray(arr)) {
-        throw new Error('Argument must be Array');
-      }
-    };
-
     if (
       (typeof args[0] === 'object' && args[0].escapeNames) ||
       (args.length > 1 && args[1].escapeNames)
@@ -151,48 +145,59 @@ export default function query(...args) {
           return value;
         };
 
-        const compareFunctionsListener = function(value, operator) {
+        const generateCommand = function(value, operator) {
           const addNot = isNotActive ? 'NOT ' : '';
           isNotActive = false;
+
+          if (typeof value === 'object') {
+            return `${addNot + parameter} ${operator} ${123}`;
+          }
 
           return `${addNot + parameter} ${operator} ${escapeCharacters(value)}`;
         };
 
         this.equals = function(value) {
-          request.where += compareFunctionsListener(value, '=');
+          request.where += generateCommand(value, '=');
           return where;
         };
 
         this.in = function(values) {
-          isArray(values);
+          if (Array.isArray(values)) {
+            const operator = isNotActive ? 'NOT IN' : 'IN';
+            request.where += `${parameter} ${operator} (${values
+              .map(v => escapeCharacters(v))
+              .join(', ')})`;
 
-          const operator = isNotActive ? 'NOT IN' : 'IN';
-          request.where += `${parameter} ${operator} (${values
-            .map(v => escapeCharacters(v))
-            .join(', ')})`;
+            isNotActive = false;
+          } else if (typeof values === 'object') {
+            const operator = isNotActive ? 'NOT IN' : 'IN';
+            request.where += `${parameter} ${operator} (${values.toString().slice(0, -1)})`;
 
-          isNotActive = false;
+            isNotActive = false;
+          } else {
+            throw new Error('Incorrect argument!');
+          }
 
           return where;
         };
 
         this.gt = function(value) {
-          request.where += compareFunctionsListener(value, '>');
+          request.where += generateCommand(value, '>');
           return where;
         };
 
         this.gte = function(value) {
-          request.where += compareFunctionsListener(value, '>=');
+          request.where += generateCommand(value, '>=');
           return where;
         };
 
         this.lt = function(value) {
-          request.where += compareFunctionsListener(value, '<');
+          request.where += generateCommand(value, '<');
           return where;
         };
 
         this.lte = function(value) {
-          request.where += compareFunctionsListener(value, '<=');
+          request.where += generateCommand(value, '<=');
           return where;
         };
 
