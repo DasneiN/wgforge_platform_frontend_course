@@ -151,54 +151,48 @@ export default function query(...args) {
           return value;
         };
 
-        this.equals = function(value) {
+        const compareFunctionsListener = function(value, operator) {
           const addNot = isNotActive ? 'NOT ' : '';
           isNotActive = false;
 
-          request.where += `${addNot + parameter} = ${escapeCharacters(value)}`;
+          return `${addNot + parameter} ${operator} ${escapeCharacters(value)}`;
+        };
+
+        this.equals = function(value) {
+          request.where += compareFunctionsListener(value, '=');
           return where;
         };
 
         this.in = function(values) {
           isArray(values);
+
           const operator = isNotActive ? 'NOT IN' : 'IN';
           request.where += `${parameter} ${operator} (${values
             .map(v => escapeCharacters(v))
             .join(', ')})`;
+
           isNotActive = false;
 
           return where;
         };
 
         this.gt = function(value) {
-          const addNot = isNotActive ? 'NOT ' : '';
-          isNotActive = false;
-
-          request.where += `${addNot + parameter} > ${escapeCharacters(value)}`;
+          request.where += compareFunctionsListener(value, '>');
           return where;
         };
 
         this.gte = function(value) {
-          const addNot = isNotActive ? 'NOT ' : '';
-          isNotActive = false;
-
-          request.where += `${addNot + parameter} >= ${escapeCharacters(value)}`;
+          request.where += compareFunctionsListener(value, '>=');
           return where;
         };
 
         this.lt = function(value) {
-          const addNot = isNotActive ? 'NOT ' : '';
-          isNotActive = false;
-
-          request.where += `${addNot + parameter} < ${escapeCharacters(value)}`;
+          request.where += compareFunctionsListener(value, '<');
           return where;
         };
 
         this.lte = function(value) {
-          const addNot = isNotActive ? 'NOT ' : '';
-          isNotActive = false;
-
-          request.where += `${addNot + parameter} <= ${escapeCharacters(value)}`;
+          request.where += compareFunctionsListener(value, '<=');
           return where;
         };
 
