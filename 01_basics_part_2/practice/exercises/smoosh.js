@@ -1,3 +1,4 @@
+/* eslint-disable func-style */
 /**
  * Задача 1: написать функцию smoosh, которая принимает массив, "выравнивает" вложенные массивы
  * в одноуровневый массив и возвращает новый плоский массив.
@@ -16,7 +17,7 @@
  */
 
 function smoosh(arr) {
-  if (isArray(arr)) {
+  if (Array.isArray(arr)) {
     let result = [];
 
     arr.forEach(val => {
@@ -29,36 +30,20 @@ function smoosh(arr) {
 
     return result;
   }
+
+  throw new Error('argument should be an array');
 }
 
 function squeeze(arr) {
-  if (isArray(arr)) {
-    function smooshInSqueeze(smooshArr) {
-      let result = [];
-
-      smooshArr.forEach(val => {
-        if (Array.isArray(val)) {
-          result = result.concat(smooshInSqueeze(val));
-        } else {
-          result.push(val);
-        }
-      });
-
-      return result;
-    }
-
+  if (Array.isArray(arr)) {
     arr.forEach((val, index) => {
       if (Array.isArray(val)) {
-        arr.splice(index, 1, ...smooshInSqueeze(val));
+        arr.splice(index, 1, ...squeeze(arr[index]));
       }
     });
 
     return arr;
   }
-}
-
-function isArray(arr) {
-  if (arr instanceof Array) return true;
 
   throw new Error('argument should be an array');
 }
