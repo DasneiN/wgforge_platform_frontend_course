@@ -27,5 +27,18 @@
  * //    }
  */
 export default function deepMerge(destinationObject, sourceObject) {
-  // ¯\_(ツ)_/¯
+  if (
+    typeof sourceObject === 'object' &&
+    !!sourceObject &&
+    typeof destinationObject === 'object' &&
+    !!destinationObject
+  ) {
+    for (const key in sourceObject) {
+      destinationObject[key] = deepMerge(destinationObject[key], sourceObject[key]);
+    }
+  } else {
+    destinationObject = sourceObject;
+  }
+
+  return destinationObject;
 }
