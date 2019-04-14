@@ -1,3 +1,5 @@
+/* eslint-disable consistent-this */
+/* eslint-disable quotes */
 /**
  * Задание: написать построитель SQL-запросов.
  * Данный модуль должен экспортировать функцию `query`, вызов которой должен возвращать новый экземпляр объекта query.
@@ -82,169 +84,151 @@
  */
 
 export default function query(...args) {
-  return new function() {
-    const request = {
-      tableName: typeof args[0] === 'string' ? args[0] : undefined,
-      quotes: ''
-    };
-
-    const isString = function(str) {
-      if (typeof str !== 'string') {
-        throw new Error('Argument must be String');
+  class Query {
+    constructor() {
+      const request = {
+        quotes: '',
+        fields: '*',
+        from: typeof args[0] === 'string' ? args[0] : undefined,
+        where: []
+      };
+      if (
+        (typeof args[0] === 'object' && args[0].escapeNames) ||
+        (args.length > 1 && args[1].escapeNames)
+      ) {
+        request.quotes = '"';
       }
-    };
-
-    if (
-      (typeof args[0] === 'object' && args[0].escapeNames) ||
-      (args.length > 1 && args[1].escapeNames)
-    ) {
-      request.quotes = '"';
-    }
-
-    this.select = function(...entries) {
-      request.entries =
-        entries.length > 0
-          ? entries
-              .map(v => {
-                isString(v);
-                return `${request.quotes + v + request.quotes}`;
-              })
-              .join(', ')
-          : '*';
-      return this;
-    };
-
-    this.from = function(tableName) {
-      isString(tableName);
-      request.tableName = `${request.tableName || tableName}`;
-      return this;
-    };
-
-    this.where = function(parameter, addOR = false) {
-      isString(parameter);
-
-      const where = this;
-      let isNotActive = false;
-
-      if (request.where) {
-        request.where += ` ${addOR ? 'OR' : 'AND'} `;
-      } else {
-        request.where = '';
-      }
-
-      return new function() {
-        const escapeCharacters = function(value) {
-          if (typeof value === 'string') {
-            if (request.quotes === '"') {
-              return `"${value}"`;
-            }
-
-            return `'${value}'`;
-          }
-
-          return value;
-        };
-
-        const generateCommand = function(value, operator) {
-          const addNot = isNotActive ? 'NOT ' : '';
-          isNotActive = false;
-
-          if (typeof value === 'object') {
-            return `${addNot + parameter} ${operator} ${123}`;
-          }
-
-          return `${addNot + parameter} ${operator} ${escapeCharacters(value)}`;
-        };
-
-        this.equals = function(value) {
-          request.where += generateCommand(value, '=');
-          return where;
-        };
-
-        this.in = function(values) {
-          if (Array.isArray(values)) {
-            const operator = isNotActive ? 'NOT IN' : 'IN';
-            request.where += `${parameter} ${operator} (${values
-              .map(v => escapeCharacters(v))
-              .join(', ')})`;
-
-            isNotActive = false;
-          } else if (typeof values === 'object') {
-            const operator = isNotActive ? 'NOT IN' : 'IN';
-            request.where += `${parameter} ${operator} (${values.toString().slice(0, -1)})`;
-
-            isNotActive = false;
-          } else {
-            throw new Error('Incorrect argument!');
-          }
-
-          return where;
-        };
-
-        this.gt = function(value) {
-          request.where += generateCommand(value, '>');
-          return where;
-        };
-
-        this.gte = function(value) {
-          request.where += generateCommand(value, '>=');
-          return where;
-        };
-
-        this.lt = function(value) {
-          request.where += generateCommand(value, '<');
-          return where;
-        };
-
-        this.lte = function(value) {
-          request.where += generateCommand(value, '<=');
-          return where;
-        };
-
-        this.between = function(startValue, endValue) {
-          const addNot = isNotActive ? 'NOT ' : '';
-          isNotActive = false;
-
-          request.where += `${addNot + parameter} BETWEEN ${startValue} AND ${endValue}`;
-          return where;
-        };
-
-        this.isNull = function() {
-          const operator = isNotActive ? 'IS NOT NULL' : 'IS NULL';
-          isNotActive = false;
-
-          request.where += `${parameter} ${operator}`;
-          return where;
-        };
-
-        this.not = function() {
-          if (isNotActive) {
-            throw new Error("not() can't be called multiple times in a row !");
-          }
-
-          isNotActive = true;
-          return this;
-        };
-      }();
-    };
-
-    this.orWhere = function(parameter) {
-      return this.where(parameter, true);
-    };
-
-    this.toString = function() {
-      let fullQuery = `SELECT ${request.entries} FROM ${request.quotes +
-        request.tableName +
-        request.quotes}`;
-
-      if (request.where) {
-        if (request.quotes === '"') {
-          request.where = request.where.replace(/'/, '"');
+      const isString = function(str) {
+        if (typeof str !== 'string') {
+          throw new Error('Argument must be String');
         }
-        fullQuery += ` WHERE ${request.where}`;
-      }
+      };
+      this.select = function(...fields) {
+        request.fields =
+          fields.length > 0
+            ? fields
+                .map(field => {
+                  isString(field);
+                  return `${request.quotes + field + request.quotes}`;
+                })
+                .join(', ')
+            : '*';
+        return this;
+      };
+      this.from = function(tableName) {
+        isString(tableName);
+        request.from = `${request.from || tableName}`;
+        return this;
+      };
+      this.where = function(field, addOR = false) {
+        const where = this;
+        class Where {
+          constructor() {
+            isString(field);
+            let isNotActive = false;
+            const newWhere = {
+              or: addOR
+            };
+            const escapeCharacters = function(value) {
+              if (typeof value === 'string') {
+                const quotes = request.quotes || "'";
+                return `${quotes + value + quotes}`;
+              }
+              return value;
+            };
+            const generateNewWhereStatement = function(value, operator) {
+              const addNot = isNotActive ? 'NOT ' : '';
+              isNotActive = false;
+              if (typeof value === 'object') {
+                newWhere.request = `${addNot + field} ${operator}`;
+              }
+              newWhere.request = `${addNot + field} ${operator} ${escapeCharacters(value)}`;
+              request.where.push(newWhere);
+            };
+            this.equals = function(value) {
+              generateNewWhereStatement(value, '=');
+              return where;
+            };
+            this.in = function(values) {
+              if (Array.isArray(values)) {
+                const operator = isNotActive ? 'NOT IN' : 'IN';
+                newWhere.request = `${field} ${operator} (${values
+                  .map(v => escapeCharacters(v))
+                  .join(', ')})`;
+                request.where.push(newWhere);
+                isNotActive = false;
+              } else if (typeof values === 'object') {
+                const operator = isNotActive ? 'NOT IN' : 'IN';
+                newWhere.request = `${field} ${operator}(${values.toString().slice(0, -1)})`;
+                request.where.push(newWhere);
+                isNotActive = false;
+              } else {
+                throw new Error('Incorrect argument!');
+              }
+              return where;
+            };
+            this.gt = function(value) {
+              generateNewWhereStatement(value, '>');
+              return where;
+            };
+            this.gte = function(value) {
+              generateNewWhereStatement(value, '>=');
+              return where;
+            };
+            this.lt = function(value) {
+              generateNewWhereStatement(value, '<');
+              return where;
+            };
+            this.lte = function(value) {
+              generateNewWhereStatement(value, '<=');
+              return where;
+            };
+            this.between = function(startValue, endValue) {
+              const addNot = isNotActive ? 'NOT ' : '';
+              isNotActive = false;
+              newWhere.request = `${addNot + field} BETWEEN ${startValue} AND ${endValue}`;
+              request.where.push(newWhere);
+              return where;
+            };
+            this.isNull = function() {
+              const operator = isNotActive ? 'IS NOT NULL' : 'IS NULL';
+              isNotActive = false;
+              newWhere.request = `${field} ${operator}`;
+              request.where.push(newWhere);
+              return where;
+            };
+            this.not = function() {
+              if (isNotActive) {
+                throw new Error('not() can not be called multiple times in a row!');
+              }
+              isNotActive = true;
+              return this;
+            };
+          }
+        }
+        return new Where(field, addOR);
+      };
+      this.orWhere = function(field) {
+        return this.where(field, true);
+      };
+      this.toString = function() {
+        let fullQuery = `SELECT ${request.fields} FROM ${request.quotes +
+          request.from +
+          request.quotes}`;
+        if (request.where.length) {
+          request.where.forEach((addWhere, index) => {
+            if (index > 0) {
+              fullQuery += `${addWhere.or ? ' OR' : ' AND'}`;
+            } else {
+              fullQuery += ' WHERE';
+            }
+            fullQuery += ` ${addWhere.request}`;
+          });
+        }
+        return `${fullQuery};`;
+      };
+    }
+  }
 
-      return `${fullQuery};`;
-    };
-  }();
+  return new Query(args);
 }
