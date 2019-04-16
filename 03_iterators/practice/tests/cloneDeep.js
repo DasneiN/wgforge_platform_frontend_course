@@ -118,6 +118,12 @@ const users = [
   }
 ];
 
+const nullPropObject = {
+  name: 'Alex',
+  gender: 'male',
+  hobbies: null
+};
+
 test('cloneDeep', t => {
   t.equal(typeof cloneDeep, 'function');
 
@@ -137,6 +143,18 @@ test('cloneDeep', t => {
   t.test('clone deep array of objects', tt => {
     tt.notEqual(clonedUsers[0] === users[0], true);
     tt.deepEqual(clonedUsers, users);
+
+    tt.end();
+  });
+
+  t.test('try to cloneDeep() object with null-value properties', tt => {
+    tt.deepEqual(cloneDeep(nullPropObject), nullPropObject);
+
+    tt.end();
+  });
+
+  t.test('try to cloneDeep() null-object', tt => {
+    tt.deepEqual(cloneDeep(null), null);
 
     tt.end();
   });

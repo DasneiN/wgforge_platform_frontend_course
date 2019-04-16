@@ -14,9 +14,9 @@
 export default function zipObject(keys, values) {
   const result = {};
 
-  for (let i = 0; i < keys.length; i++) {
-    result[keys[i]] = values[i];
-  }
+  Object.keys(keys).forEach((key, index) => {
+    result[keys[key]] = values[index];
+  });
 
   return result;
 }

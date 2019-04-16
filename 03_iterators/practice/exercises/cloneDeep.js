@@ -5,9 +5,9 @@ export default function cloneDeep(obj) {
   if (typeof obj === 'object' && !!obj) {
     const result = {};
 
-    for (let key in obj) {
+    Object.keys(obj).forEach(key => {
       result[key] = cloneDeep(obj[key]);
-    }
+    });
 
     return result;
   }
