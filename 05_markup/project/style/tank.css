@@ -52,7 +52,7 @@
         transition: transform 3s ease;
 
         /*** animation ***/
-        /*animation: turret 20s infinite alternate;*/
+        /* animation: turret 20s infinite alternate; */
     }
     .tank_turret__left {
         transform: rotate(-40deg);
