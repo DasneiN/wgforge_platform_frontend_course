@@ -19,10 +19,6 @@ sections[0].addEventListener('click', e => {
   document.body.className = 'toggle';
 });
 
-// document.addEventListener('scroll', e => {
-//   console.log(e);
-// });
-
 sections[0].onscroll = e => {
   const offset = moveTank.getBoundingClientRect().bottom - e.target.scrollTop;
   moveTank.style.transform = `translateZ(40px) scale(.87) translateX(${-1 * offset}px)`;
